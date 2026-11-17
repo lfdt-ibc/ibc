@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc/cli/internal/relay/clientupdater"
-	"github.com/cosmos/ibc/cli/internal/tests/mocks"
-	v2 "github.com/cosmos/ibc/cli/internal/types/v2"
+	"github.com/lfdt-ibc/ibc/cli/internal/relay/clientupdater"
+	"github.com/lfdt-ibc/ibc/cli/internal/tests/mocks"
+	v2 "github.com/lfdt-ibc/ibc/cli/internal/types/v2"
 )
 
 const interval = 20 * time.Millisecond
