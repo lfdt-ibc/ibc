@@ -3,13 +3,16 @@
 package evm
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +22,119 @@ import (
 	"github.com/cosmos/ibc-contracts/packages/go-abigen/ics26router"
 	"github.com/cosmos/ibc-contracts/packages/go-abigen/ift"
 )
+
+// overlappingRevert encodes bytes[] elements that all alias one payload.
+func overlappingRevert(t testing.TB, count, elementSize int) []byte {
+	t.Helper()
+	contractABI, err := ics26router.ContractMetaData.GetAbi()
+	require.NoError(t, err)
+	customErr := contractABI.Errors["InvalidMerklePrefix"]
+	data := make([]byte, 4+64+count*32+32+elementSize)
+	copy(data, customErr.ID[:4])
+	putWord := func(offset, n int) {
+		binary.BigEndian.PutUint64(data[offset+24:offset+32], uint64(n))
+	}
+	putWord(4, 32)
+	putWord(36, count)
+	for i := range count {
+		putWord(68+i*32, count*32)
+	}
+	putWord(68+count*32, elementSize)
+	for i := 100 + count*32; i < len(data); i++ {
+		data[i] = 0xff
+	}
+	return data
+}
+
+func TestExplainRevertDataOverlappingOffsetsBounded(t *testing.T) {
+	data := overlappingRevert(t, 8, 256)
+	contractABI, err := ics26router.ContractMetaData.GetAbi()
+	require.NoError(t, err)
+	decoded, err := contractABI.Errors["InvalidMerklePrefix"].Inputs.Unpack(data[4:])
+	require.NoError(t, err)
+	require.Len(t, decoded, 1)
+	require.Len(t, decoded[0], 8)
+	// The bounded fixture demonstrates the old formatting amplification without
+	// invoking the audit-scale payload's expensive formatter.
+	require.Greater(t, len(fmt.Sprint(decoded)), 2048)
+	reason := ExplainRevertData(data)
+	require.Contains(t, reason, "InvalidMerklePrefix")
+	require.LessOrEqual(t, len(reason), 2048)
+	require.Contains(t, reason, fmt.Sprintf("%d bytes, truncated", len(data)))
+}
+
+func TestExplainRevertDataLimits(t *testing.T) {
+	t.Run("argument at the limit retains the error name", func(t *testing.T) {
+		clientID := strings.Repeat("x", maxRevertReason)
+		data := revertData(t, ics26router.ContractMetaData, "IBCClientNotFound", clientID)
+		require.Equal(t, "IBCClientNotFound("+clientID+")", ExplainRevertData(hexutil.MustDecode(data)))
+	})
+	t.Run("many aliases are summarized before formatting", func(t *testing.T) {
+		data := overlappingRevert(t, 100, 256)
+		reason := ExplainRevertData(data)
+		require.LessOrEqual(t, len(reason), maxRevertReason)
+		require.Contains(t, reason, "InvalidMerklePrefix")
+		require.Contains(t, reason, "bytes, truncated")
+	})
+	t.Run("unknown data is summarized", func(t *testing.T) {
+		data := make([]byte, 33*1024)
+		copy(data, hexutil.MustDecode("0xdeadbeef"))
+		reason := ExplainRevertData(data)
+		require.LessOrEqual(t, len(reason), maxRevertReason)
+		require.Contains(t, reason, fmt.Sprintf("%d bytes, truncated", len(data)))
+	})
+	t.Run("audit payload is summarized before formatting", func(t *testing.T) {
+		data := overlappingRevert(t, 512, 16*1024)
+		reason := ExplainRevertData(data)
+		require.Contains(t, reason, "InvalidMerklePrefix")
+		require.Contains(t, reason, fmt.Sprintf("%d bytes, truncated", len(data)))
+		require.Less(t, len(reason), 256)
+		original := revertError{data: hexutil.Encode(data)}
+		err := ExplainRevert(original)
+		require.ErrorIs(t, err, original)
+		require.EqualError(t, err, reason+": execution reverted")
+	})
+	t.Run("small bytes array preserves diagnostics", func(t *testing.T) {
+		data := revertData(t, ics26router.ContractMetaData, "InvalidMerklePrefix", [][]byte{{1, 2}, {3}})
+		require.Equal(t, "InvalidMerklePrefix([[1 2] [3]])", ExplainRevertData(hexutil.MustDecode(data)))
+	})
+	t.Run("malformed known error", func(t *testing.T) {
+		contractABI, err := ics26router.ContractMetaData.GetAbi()
+		require.NoError(t, err)
+		customErr := contractABI.Errors["InvalidMerklePrefix"]
+		require.Contains(t, ExplainRevertData(customErr.ID[:4]), "InvalidMerklePrefix (malformed data:")
+	})
+	t.Run("long valid revert string", func(t *testing.T) {
+		stringType, err := abi.NewType("string", "", nil)
+		require.NoError(t, err)
+		for _, size := range []int{3000, 5000} {
+			want := strings.Repeat("x", size)
+			message, err := (abi.Arguments{{Type: stringType}}).Pack(want)
+			require.NoError(t, err)
+			reason := ExplainRevertData(append(hexutil.MustDecode("0x08c379a0"), message...))
+			require.Equal(t, want, reason)
+		}
+	})
+}
+
+func BenchmarkExplainRevertDataOverlappingOffsets(b *testing.B) {
+	for _, tc := range []struct {
+		name        string
+		count, size int
+	}{
+		{"small", 8, 256},
+		{"audit", 512, 16 * 1024},
+	} {
+		b.Run(tc.name, func(b *testing.B) {
+			data := overlappingRevert(b, tc.count, tc.size)
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				_ = ExplainRevertData(data)
+			}
+		})
+	}
+}
 
 type revertError struct {
 	code int
@@ -48,6 +164,11 @@ var namedReverts = []struct {
 	args     []any
 	want     string
 }{
+	{
+		ics26router.ContractMetaData, "IBCUnauthorizedSender",
+		[]any{common.HexToAddress("0x1234")},
+		"IBCUnauthorizedSender(0x0000000000000000000000000000000000001234)",
+	},
 	{ics26router.ContractMetaData, "IBCClientNotFound", []any{"client-0"}, "IBCClientNotFound(client-0)"},
 	{attestation.ContractMetaData, "ConsensusTimestampNotFound", []any{uint64(7)}, "ConsensusTimestampNotFound(7)"},
 	{ift.ContractMetaData, "RateLimitExceeded", nil, "RateLimitExceeded()"},
