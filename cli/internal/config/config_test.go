@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc/cli/api/v2/relayer"
-	ibcyaml "github.com/cosmos/ibc/cli/internal/yaml"
+	"github.com/lfdt-ibc/ibc/cli/api/v2/relayer"
+	ibcyaml "github.com/lfdt-ibc/ibc/cli/internal/yaml"
 )
 
 func TestConfig(t *testing.T) {

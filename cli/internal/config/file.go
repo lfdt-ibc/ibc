@@ -13,7 +13,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/pkg/errors"
 
-	ibcyaml "github.com/cosmos/ibc/cli/internal/yaml"
+	ibcyaml "github.com/lfdt-ibc/ibc/cli/internal/yaml"
 )
 
 func LoadFromFile(path string, validate bool) (Config, error) {
