@@ -104,26 +104,20 @@ type AutoRelayConfig struct {
 
 // AutoUpdateConfig automatic client update settings.
 type AutoUpdateConfig struct {
-	// Enabled turns on automatic updates for this client. Unset is off.
-	Enabled *bool `yaml:"enabled,omitempty"`
-
 	// Interval is how often the client is updated to the latest height its
-	// prover can prove. Required when enabled; keep it well below the
-	// client's trusting period.
+	// prover can prove. Setting a positive interval enables automatic updates;
+	// unset disables them. Keep it well below the client's trusting period.
 	Interval *time.Duration `yaml:"interval,omitempty"`
 }
 
 // IsEnabled reports whether automatic updates are on.
 func (c AutoUpdateConfig) IsEnabled() bool {
-	return c.Enabled != nil && *c.Enabled
+	return c.Interval != nil
 }
 
 func (c AutoUpdateConfig) Validate() error {
-	switch {
-	case c.Interval != nil && *c.Interval <= 0:
+	if c.Interval != nil && *c.Interval <= 0 {
 		return errPathf("interval", "must be positive")
-	case c.IsEnabled() && c.Interval == nil:
-		return errPathf("interval", "required when enabled")
 	}
 
 	return nil

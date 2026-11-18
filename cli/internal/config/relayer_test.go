@@ -80,6 +80,10 @@ func TestRelayerConfig(t *testing.T) {
 		assert.Equal(t, "1", end.ChainID)
 		assert.Equal(t, "8453", counterparty.ChainID)
 		assert.Equal(t, "ethereum-0", counterparty.ClientID)
+		assert.False(t, end.AutoUpdate.IsEnabled())
+		interval := time.Hour
+		end.AutoUpdate.Interval = &interval
+		assert.True(t, end.AutoUpdate.IsEnabled())
 
 		_, _, ok = config.Relayer.ClientEnd("1", "unknown-0")
 		assert.False(t, ok)
@@ -144,14 +148,6 @@ func TestRelayerConfig(t *testing.T) {
 				},
 			},
 			{
-				name: "auto-updated client end without an interval",
-				patch: func(c *Config) {
-					enabled := true
-					c.Relayer.Connections[0].ClientB.AutoUpdate.Enabled = &enabled
-				},
-				errContains: "relayer.connections[0].clientB.autoUpdate.interval: required when enabled",
-			},
-			{
 				name: "auto-update interval that is not positive",
 				patch: func(c *Config) {
 					interval := time.Duration(0)
@@ -162,8 +158,8 @@ func TestRelayerConfig(t *testing.T) {
 			{
 				name: "auto-updated client end with an interval",
 				patch: func(c *Config) {
-					enabled, interval := true, time.Hour
-					c.Relayer.Connections[0].ClientB.AutoUpdate = AutoUpdateConfig{Enabled: &enabled, Interval: &interval}
+					interval := time.Hour
+					c.Relayer.Connections[0].ClientB.AutoUpdate.Interval = &interval
 				},
 			},
 			{

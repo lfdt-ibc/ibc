@@ -71,7 +71,6 @@ relayer:
         autoRelay:
           enabled: false
         autoUpdate:
-          enabled: false
           interval: 1h
 attestors:
   - name: "attestor-alice-base"

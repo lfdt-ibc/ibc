@@ -14,6 +14,7 @@ import (
 
 func TestBuildRelayerConfigYAML(t *testing.T) {
 	cfg := testRelayerConfig()
+	cfg.Connections[0].A.AutoUpdateInterval = 20 * time.Second
 	for _, chain := range cfg.Chains {
 		cfg.Attestors = append(cfg.Attestors, RelayerAttestor{
 			Name: "local-attestor-" + chain.ChainID, Type: RelayerAttestorLocal,
@@ -57,6 +58,8 @@ relayer:
             type: attestation
             autoRelay:
                 enabled: true
+            autoUpdate:
+                interval: 20s
           clientB:
             chainId: "2"
             signer: tx

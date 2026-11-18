@@ -198,7 +198,7 @@ func relayerClientEndConfig(end RelayerClientEnd, signer, proverURL string) Clie
 		AutoRelay: autoRelay(end.AutoRelay),
 	}
 	if end.AutoUpdateInterval > 0 {
-		result.AutoUpdate = &AutoUpdateFileConfig{Enabled: true, Interval: end.AutoUpdateInterval.String()}
+		result.AutoUpdate = &AutoUpdateFileConfig{Interval: end.AutoUpdateInterval.String()}
 	}
 	if proverURL != "" {
 		result.RemoteProver = &RemoteProverFileConfig{URL: proverURL}
@@ -288,7 +288,6 @@ type AutoRelayFileConfig struct {
 }
 
 type AutoUpdateFileConfig struct {
-	Enabled  bool   `yaml:"enabled"`
 	Interval string `yaml:"interval"`
 }
 
