@@ -4,7 +4,6 @@ package evm
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -21,7 +20,7 @@ import (
 )
 
 const (
-	maxRevertReason    = 2048
+	maxRevertDataBytes = 1024
 	revertPreviewBytes = 64
 )
 
@@ -51,13 +50,16 @@ func ExplainRevert(err error) error {
 	return errors.Wrap(err, ExplainRevertData(data))
 }
 
-// ExplainRevertData decodes revert reasons and bounds custom-error diagnostics.
+// ExplainRevertData decodes at most 1 KiB of encoded revert data, including the
+// selector. Larger errors retain a bounded preview and any known custom name.
 func ExplainRevertData(data []byte) string {
 	if len(data) == 0 {
 		return "empty revert data"
 	}
-	if reason, err := abi.UnpackRevert(data); err == nil {
-		return reason
+	if len(data) <= maxRevertDataBytes {
+		if reason, err := abi.UnpackRevert(data); err == nil {
+			return reason
+		}
 	}
 	if len(data) < 4 {
 		return hexutil.Encode(data)
@@ -71,18 +73,12 @@ func ExplainRevertData(data []byte) string {
 		if idErr != nil {
 			continue
 		}
+		if len(data) > maxRevertDataBytes {
+			return customErr.Name + " (" + revertDataPreview(data) + ")"
+		}
 		args, unpackErr := customErr.Inputs.Unpack(data[4:])
 		if unpackErr != nil {
 			return fmt.Sprintf("%s (malformed data: %s)", customErr.Name, revertDataPreview(data))
-		}
-		// Check the expanded values before fmt traverses them: ABI offsets may
-		// alias the same bytes repeatedly even when the encoded input is small.
-		// The budget covers arguments; the name and punctuation add a small overhead.
-		budget := maxRevertReason
-		for _, arg := range args {
-			if !revertValueFits(reflect.ValueOf(arg), &budget) {
-				return customErr.Name + " (" + revertDataPreview(data) + ")"
-			}
 		}
 		values := make([]string, len(args))
 		for i, arg := range args {
@@ -98,34 +94,7 @@ func revertDataPreview(data []byte) string {
 		return hexutil.Encode(data)
 	}
 	return fmt.Sprintf(
-		"%s... (%d bytes, truncated)",
+		"%s... (%d encoded bytes, truncated)",
 		hexutil.Encode(data[:revertPreviewBytes]), len(data),
 	)
-}
-
-// revertValueFits conservatively budgets formatting of the registered ABI
-// errors. Traversal stops as soon as the budget is exhausted, including when
-// different slices alias the same payload. Scalars fit within 128 characters;
-// byte elements need at most three decimal digits.
-func revertValueFits(value reflect.Value, budget *int) bool {
-	if *budget <= 0 {
-		return false
-	}
-	switch value.Kind() {
-	case reflect.Array, reflect.Slice:
-		*budget -= 2 // brackets
-		for i := 0; i < value.Len(); i++ {
-			*budget-- // separator
-			if !revertValueFits(value.Index(i), budget) {
-				return false
-			}
-		}
-	case reflect.String:
-		*budget -= value.Len()
-	case reflect.Uint8:
-		*budget -= 3
-	default:
-		*budget -= 128
-	}
-	return *budget >= 0
 }
