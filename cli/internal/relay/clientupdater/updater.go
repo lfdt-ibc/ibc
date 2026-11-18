@@ -60,6 +60,8 @@ func New(
 }
 
 // Start runs the first update right away, then one every interval, until Stop.
+// Failed attempts also retry with exponential backoff from one to 30 seconds,
+// never waiting longer than the regular interval.
 func (u *Updater) Start() {
 	ctx, cancel := context.WithCancel(context.Background())
 	u.cancel = cancel
@@ -67,17 +69,33 @@ func (u *Updater) Start() {
 	u.wg.Go(func() {
 		ticker := time.NewTicker(u.interval)
 		defer ticker.Stop()
+		retryTimer := time.NewTimer(0)
+		retryTimer.Stop()
+		defer retryTimer.Stop()
+		initialRetry := min(time.Second, u.interval)
+		retryDelay := initialRetry
 
-		for {
+		for ctx.Err() == nil {
 			attemptCtx, cancelAttempt := context.WithTimeout(ctx, u.interval)
-			u.update(attemptCtx)
+			err := u.update(attemptCtx)
 			cancelAttempt()
+
+			var retry <-chan time.Time
+			if err != nil {
+				retryTimer.Reset(retryDelay)
+				retry = retryTimer.C
+				retryDelay = min(2*retryDelay, 30*time.Second, u.interval)
+			} else {
+				retryDelay = initialRetry
+			}
 
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
+			case <-retry:
 			}
+			retryTimer.Stop()
 		}
 	})
 }
@@ -93,9 +111,8 @@ func (u *Updater) Stop() {
 	u.cancel = nil
 }
 
-// update logs a failure rather than retrying it: the next tick retries, and
-// the interval is meant to be well inside the client's trusting period.
-func (u *Updater) update(ctx context.Context) {
+// update logs the outcome and returns failures to the retry loop.
+func (u *Updater) update(ctx context.Context) error {
 	height, updated, err := processors.UpdateClient(
 		ctx, u.logger, u.prover, u.txBuilder, u.txSubmitter, u.clientID,
 	)
@@ -113,6 +130,10 @@ func (u *Updater) update(ctx context.Context) {
 	default:
 		u.logger.Debug("Client already trusts the latest provable height", "height", height)
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return err
 }
 
 // Set the updaters for every client end with automatic updates enabled.
