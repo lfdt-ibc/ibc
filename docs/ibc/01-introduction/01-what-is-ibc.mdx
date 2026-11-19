@@ -3,7 +3,7 @@ title: "What is IBC?"
 description: "IBC is a protocol for sending packets between independent chains, where each chain verifies the other chain's writes with an on-chain light client."
 ---
 
-The Inter-Blockchain Communication (IBC) Protocol is the open standard for secure interoperability between independent systems. It is a battle-tested, extensible, trust-minimized interoperability protocol that connects 115+ public blockchain networks, plus private networks and consortia. In over five years of production, it has processed $50B+ in transaction volume without an exploit of the supported version. IBC is an open standard that lets digital ledgers exchange assets and data directly with other ledgers, including Ethereum and EVM-based frameworks such as Hyperledger Besu, non-Ethereum ledgers, and other systems that meet a small set of requirements.
+The Inter-Blockchain Communication (IBC) Protocol is the open standard for secure interoperability between independent systems. It is a battle-tested, extensible, trust-minimized interoperability protocol that connects 115+ public blockchain networks, plus private networks and consortia. In over five years of production, it has processed $50B+ in transaction volume without an exploit of the supported version. IBC is an open standard that lets digital ledgers exchange assets and data directly with other ledgers, including Ethereum and EVM-based frameworks such as Besu, non-Ethereum ledgers, and other systems that meet a small set of requirements.
 
 Like TCP/IP standardized communication across the internet, IBC standardizes communication across blockchains and other distributed ledgers. It enables two systems to exchange data, assets, and arbitrary messages directly, without relying on a centralized or third-party intermediary.
 
@@ -48,13 +48,13 @@ IBC has run in production for more than five years, connecting 115+ public netwo
 
 ### Customizable at every layer
 
-IBC makes no assumptions about what it connects. The standards can be implemented in any language, on any network able to produce the verification a counterparty requires, and each layer can be adapted independently. [Applications](/ibc/02-how-ibc-works/02-packets-and-applications) can be anything: adopt the standard modules, [ICS-20](/ibc/spec/app/ics-020-fungible-token-transfer/README), [GMP](/ibc/03-applications/01-gmp), and [IFT](/ibc/03-applications/02-ift), or write your own, which needs only to implement a minimal interface and register with the [router](/ibc/02-how-ibc-works/03-core-router-and-store) under a port identifier. Today IBC spans EVM networks including Ethereum and [Hyperledger Besu](/ibc/04-light-clients/03-besu-light-client), Cosmos chains, and Solana.
+IBC makes no assumptions about what it connects. The standards can be implemented in any language, on any network able to produce the verification a counterparty requires, and each layer can be adapted independently. [Applications](/ibc/02-how-ibc-works/02-packets-and-applications) can be anything: adopt the standard modules, [ICS-20](/ibc/spec/app/ics-020-fungible-token-transfer/README), [GMP](/ibc/03-applications/01-gmp), and [IFT](/ibc/03-applications/02-ift), or write your own, which needs only to implement a minimal interface and register with the [router](/ibc/02-how-ibc-works/03-core-router-and-store) under a port identifier. Today IBC spans EVM networks including Ethereum and [Besu](/ibc/04-light-clients/03-besu-light-client), Cosmos chains, and Solana.
 
 ### Flexible verification
 
 IBC supports multiple trust models to meet different business and regulatory needs.
 
-- Consensus light client verification provides trust-minimized security by verifying messages directly against signed consensus data, as the [Hyperledger Besu QBFT and IBFT 2.0 light clients](/ibc/04-light-clients/03-besu-light-client) do for enterprise EVM networks.
+- Consensus light client verification provides trust-minimized security by verifying messages directly against signed consensus data, as the [Besu QBFT and IBFT 2.0 light clients](/ibc/04-light-clients/03-besu-light-client) do for enterprise EVM networks.
 - [Attestation-based verification](/ibc/04-light-clients/01-attestation-light-client) enables organizations to leverage existing governance processes, compliance frameworks, and first-party key infrastructure.
 
 ### No vendor lock-in
