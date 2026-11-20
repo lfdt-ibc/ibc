@@ -2,7 +2,7 @@
 
 module github.com/lfdt-ibc/ibc/e2e
 
-go 1.26.10
+go 1.26.11
 
 // The bun-managed contracts workspace vendors the eureka repo, which ships Go
 // sources that do not belong to this module.
