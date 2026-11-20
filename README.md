@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 # Inter-Blockchain Communication Protocol (IBC)
 
@@ -17,13 +17,13 @@ This repository is the canonical home of the inter-blockchain communication prot
 
 It consolidates design rationale, protocol semantics, and encoding descriptions for IBC, including both the core transport, authentication, & ordering layer (IBC/TAO) and the application layers describing packet encoding & processing semantics (IBC/APP), alongside the software that deploys IBC onto a chain and relays packets across it.
 
-Contributions are welcome. See [CONTRIBUTING.md](spec/CONTRIBUTING.md) for contribution guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, including the [rules for specifications](CONTRIBUTING.md#specifications).
 
 ## Repository layout
 
 | Path | What it is                                                                                                  |
 | ---- |-------------------------------------------------------------------------------------------------------------|
-| [`spec/`](spec/) | The Interchain Standards: the specifications for the protocol itself.                                       |
+| [`spec/`](spec/) | The Interchain Standards: the specifications for the protocol itself, under the Community Specification License 1.0. |
 | [`cli/`](cli/README.md) | IBC CLI: deploys IBC onto a chain, and runs the relayer and attestor processes that carry packets across it. |
 | [`docs/`](docs/README.md) | How IBC works, the contracts, and the CLI: tutorials and reference.                                         |
 | [`e2e/`](e2e/README.md) | Repository-wide black-box acceptance tests.                                                                 |
@@ -134,3 +134,7 @@ The Interchain Standards are also translated into the following languages:
 
 - [The Interblockchain Communication Protocol: An Overview, 2022](https://github.com/lfdt-ibc/ibc/blob/31f41387942ee71188b6a9799d1a55849e008c97/archive/papers/2020-05/build/paper.pdf)
 - [IBC Protocol Specification, 2017](https://github.com/lfdt-ibc/ibc/blob/31f41387942ee71188b6a9799d1a55849e008c97/archive/v0_3_1_IBC.pdf)
+
+## License
+
+Code is licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE). The specifications in `spec/` are licensed under the [Community Specification License 1.0](spec/01-community-specification-license-v1.md); see [spec/04-license.md](spec/04-license.md). Documentation is licensed under [CC BY 4.0](docs/LICENSE). The SPDX header on each file records which applies, except in snapshots of the documentation at past releases, which carry none; see [CONTRIBUTING.md](CONTRIBUTING.md#copyright-and-license).

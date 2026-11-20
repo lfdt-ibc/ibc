@@ -1,5 +1,5 @@
 ---
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: CC-BY-4.0
 name: Release tracker
 about: Create an issue to track release progress
 ---
@@ -41,7 +41,7 @@ versions to guarantee that no regression is introduced -->
 <!-- Remove any items that are not applicable. -->
 
 - [ ] Branch off main to create release branch in the form of `release/vx.y.z` and add branch protection rules.
-- [ ] Cut the release by following [`RELEASES.md`](https://github.com/lfdt-ibc/ibc/blob/main/RELEASES.md#cut-a-release).
+- [ ] Cut the release by following [`RELEASES.md`](https://github.com/lfdt-ibc/ibc/blob/main/RELEASES.md).
 
 ## Post-release checklist
 

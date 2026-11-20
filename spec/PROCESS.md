@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Community-Spec-1.0 -->
+
 ## IBC Standardisation Process
 
 IBC standardisation will follow an adaptation of the [TC 39](https://tc39.github.io/process-document/) process used by the ECMAScript steering committee.
@@ -27,14 +29,14 @@ IBC standardisation will follow an adaptation of the [TC 39](https://tc39.github
     
     For a more detailed description of standard requirements, see [ICS 1](../spec/ics-001-ics-standard).
   
-    For more details on submitting a PR, take a look at the [Pull Requests](./CONTRIBUTING.md#pull-requests) section in the contribution guidelines.
+    For more details on submitting a PR, take a look at the [Specifications](../CONTRIBUTING.md#specifications) section of the repository's contribution guidelines.
   - Identified `author(s)` who will advance the proposal in the header of the standard file
   - Any additional reference documentation or media in the `./spec/ics-{{ .Spec.Number }}-{{ .Spec.Name }}` directory
-  - The specification team expects that this proposal will be finalised and eventually included in the IBC standard set.
+  - The TSC expects that this proposal will be finalised and eventually included in the IBC standard set.
 - ***Spec Quality***:
   - Follows the structure laid out in ICS 1 and provides a reasonable overview of the proposed addition.
 - ***Acceptance Requirements***:
-  - The PR has received two approvals from members of the [core specification committee](./STANDARDS_COMMITTEE.md), at which point it can be merged into the IBC repository.
+  - The PR has the [TSC member](../TSC_MEMBERS.md) approvals that the [Specifications](../CONTRIBUTING.md#specifications) section of the contribution guidelines requires, at which point it can be merged into the IBC repository.
 - ***Changes Expected Post-Acceptance***:
   - Changes to details but not to the key concepts are expected after a standard enters draft stage. Implementers should work with the spec authors as work continues on spec development.
 - ***Implementation Types Expected***:
@@ -53,7 +55,7 @@ IBC standardisation will follow an adaptation of the [TC 39](https://tc39.github
 - ***Spec Quality***:
   - Complete: all semantics, syntax and API are completed as described
 - ***Acceptance Requirements***:
-  - The PR changing the stage to "candidate" has been approved by two members of the core specification team.
+  - The PR changing the stage to "candidate" has the [TSC member](../TSC_MEMBERS.md) approvals that the [Specifications](../CONTRIBUTING.md#specifications) section of the contribution guidelines requires.
 - ***Changes Expected Post-Acceptance***:
   - Limited: only those deemed critical based on implementation experiences.
 - ***Implementation Types Expected***:
@@ -68,9 +70,9 @@ IBC standardisation will follow an adaptation of the [TC 39](https://tc39.github
   - At least two specification-compatible implementations exist, and they have been tested against each other
   - All relevant ecosystem stakeholders approve the specification (any holdout can block this stage)
   - Acceptance tests are written and merged into the relevant repositories
-  - All files in the `./spec/ics-{{ .Spec.Number }}-{{ .Spec.Name}}/` directory are up to date and merged into the `cosmos/ics` repository
+  - All files in the `./spec/ics-{{ .Spec.Number }}-{{ .Spec.Name}}/` directory are up to date and merged into this repository
 - ***Acceptance Requirements***:
-  - The PR changing the stage to "finalised" has been approved by representatives from all relevant ecosystem stakeholders, and all members of the core specification team.
+  - The PR changing the stage to "finalised" has been approved by representatives from all relevant ecosystem stakeholders, and by the TSC under its [decision-making rules](../GOVERNANCE.md#decision-making).
 - ***Spec Quality***:
   - Final: All changes as a result of implementation experience are integrated
 - ***Changes Expected Post-Acceptance***:
@@ -80,4 +82,4 @@ IBC standardisation will follow an adaptation of the [TC 39](https://tc39.github
 
 ### Calls for implementation and feedback
 
-When an addition is accepted at the “candidate” (stage 3) maturity level, the committee is signifying that it believes design work is complete and further refinement will require implementation experience, significant usage and external feedback.
+When an addition is accepted at the “candidate” (stage 3) maturity level, the TSC is signifying that it believes design work is complete and further refinement will require implementation experience, significant usage and external feedback.

@@ -1,8 +1,19 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # IBC docs
 
 The published documentation site. `ibc/` is written here by hand; `ibc/spec/` is
 generated from `spec/` at the repo root, and `ibc-go/` is imported. See
 [AGENTS.md](AGENTS.md) before editing.
+
+Pages here are licensed under [CC BY 4.0](LICENSE), except `ibc/spec/`, which is
+generated from the specifications and stays under the
+[Community Specification License 1.0](../spec/01-community-specification-license-v1.md),
+and the snapshots of past ibc-go releases in `ibc-go/v*/`, which keep the license
+their text was written under (see
+[CONTRIBUTING.md](../CONTRIBUTING.md#copyright-and-license)). Code here, such as
+`scripts/` and `mintlify/scripts/`, is licensed under [Apache 2.0](../LICENSE).
+Every file except the snapshots carries an SPDX header recording which applies.
 
 ## Introduction
 

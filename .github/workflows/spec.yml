@@ -7,6 +7,9 @@ on:
     paths:
       - "README.md"
       - "spec/**"
+      - "docs/ibc/spec/**"
+      - "docs/scripts/specgen.py"
+      - "docs/scripts/test-specgen.py"
       - ".github/workflows/spec.yml"
       - ".github/workflows/link-check-config.json"
   pull_request:
@@ -14,6 +17,9 @@ on:
     paths:
       - "README.md"
       - "spec/**"
+      - "docs/ibc/spec/**"
+      - "docs/scripts/specgen.py"
+      - "docs/scripts/test-specgen.py"
       - ".github/workflows/spec.yml"
       - ".github/workflows/link-check-config.json"
 
@@ -38,3 +44,17 @@ jobs:
           config: "spec/.markdownlint.jsonc"
           globs: ${{ steps.changed-files.outputs.all_changed_files }}
           separator: ","
+
+  # docs/ibc/spec/ is generated from spec/. Fail when it is stale, or when a
+  # spec lacks the Copyright section and disclaimer specgen.py requires.
+  specgen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # specgen.py refuses LFS pointers in place of the spec images.
+          lfs: true
+      - name: Test specgen
+        run: python3 docs/scripts/test-specgen.py
+      - name: Check docs/ibc/spec is up to date with spec/
+        run: python3 docs/scripts/specgen.py --check

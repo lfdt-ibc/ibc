@@ -3,6 +3,8 @@
 {
   "ignores": [
     ".github",
-    "**/CHANGELOG.md"
+    "**/CHANGELOG.md",
+    // The Community Specification License text, kept verbatim from upstream.
+    "01-community-specification-license-v1.md"
   ]
 }

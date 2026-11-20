@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 # Updating the reference pages
 
@@ -12,9 +12,9 @@ Three pages carry tables derived from that surface:
 
 | Page | Covers | Derived from |
 |------|--------|--------------|
-| [5-configuration.md](../5-configuration.md) | every key in `ibc.yml`, and the example config | the config structs in `cli/internal/config/`, and the yaml fixture that package's tests load |
-| [6-cli-commands.md](../6-cli-commands.md) | every command and flag | the built binary's command tree, plus the wiring in `cli/cmd/ibc/` |
-| [7-api.md](../7-api.md) | all three gRPC services (relayer, attestation, prover) | `proto/cli/*.proto` |
+| [01-configuration.mdx](../ibc/05-ibc-cli/04-reference/01-configuration.mdx) | every key in `ibc.yml`, and the example config | the config structs in `cli/internal/config/`, and the yaml fixture that package's tests load |
+| [02-cli-commands.mdx](../ibc/05-ibc-cli/04-reference/02-cli-commands.mdx) | every command and flag | the built binary's command tree, plus the wiring in `cli/cmd/ibc/` |
+| [03-api.mdx](../ibc/05-ibc-cli/04-reference/03-api.mdx) | all three gRPC services (relayer, attestation, prover) | `proto/cli/*.proto` |
 
 Do this **before the pull request is opened**, in the same pull request as the
 code. Run everything from the repository root. Three things must be on PATH:

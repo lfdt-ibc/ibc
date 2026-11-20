@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 # Auditing the reference pages
 
@@ -67,7 +67,7 @@ because `rpcEnableReflection` is `true`, not because a field exists.
 
 ## Per-page traps
 
-**[5-configuration.md](../5-configuration.md)** — The required column and the
+**[01-configuration.mdx](../ibc/05-ibc-cli/04-reference/01-configuration.mdx)** — The required column and the
 Type column are both probed, so a wrong entry there means the probe asked the
 wrong thing, not that a word was misread. Check what "required" was scoped to:
 required to parse, to validate, or to run. Two claims on this page are
@@ -75,13 +75,13 @@ required to parse, to validate, or to run. Two claims on this page are
 confirm them; confirm them against the operator docs instead, and expect them
 to stay unconfirmable.
 
-**[6-cli-commands.md](../6-cli-commands.md)** — The command tree and flags come
+**[02-cli-commands.mdx](../ibc/05-ibc-cli/04-reference/02-cli-commands.mdx)** — The command tree and flags come
 from the binary, so they are as true as the build. The prose around them does
 not. When grepping the page for a flag, match both forms: a pattern requiring
 `` | `-- `` silently skips every short-form flag, which is how a "missing flag"
 gets reported that was never missing.
 
-**[7-api.md](../7-api.md)** — Generated from the descriptor set, so the field
+**[03-api.mdx](../ibc/05-ibc-cli/04-reference/03-api.mdx)** — Generated from the descriptor set, so the field
 lists and types are the compiler's. What is *not* the compiler's is any prose
 about what a service does with a request. Check those sentences against the
 handler.

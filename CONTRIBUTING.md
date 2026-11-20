@@ -1,10 +1,10 @@
-<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 # Contributing to IBC
 
 Thank you for your interest in contributing to IBC. IBC is an open standard for trust-minimized interoperability between independent ledgers, stewarded under the Linux Foundation Decentralized Trust (LFDT). Contributions come in many forms, and all of them follow the same public path.
 
-Before participating, please read the LFDT Code of Conduct. If you use AI or LLM tooling in your contributions, see the AI sign-off rule under Developer Certificate of Origin below.
+Before participating, please read the [Code of Conduct](CODE_OF_CONDUCT.md), which adopts the LF Decentralized Trust Code of Conduct. If you use AI or LLM tooling in your contributions, see the AI sign-off rule under Developer Certificate of Origin below.
 
 ## Ways to contribute
 
@@ -85,11 +85,29 @@ The changelog is generated from Conventional Commit titles at release time, so a
 
 ## Code review
 
-All changes are code reviewed. For non-trivial changes, the reviewer should be a Maintainer familiar with the affected area, and they may pull in a second reviewer at their discretion. Merge is performed by a Maintainer, normally the one who approved. If a pull request has gone about five working days without a reviewer emerging, ask in the community chat rather than pinging individuals. Disagreements that the reviewing Maintainers cannot resolve escalate to the TSC, and only genuinely cross-cutting disputes reach the full committee.
+All changes are code reviewed. For non-trivial changes, the reviewer should be a Maintainer familiar with the affected area, and they may pull in a second reviewer at their discretion. Merge is performed by a Maintainer, normally the one who approved. Changes to the specifications in `spec/` additionally need approval from [TSC members](TSC_MEMBERS.md), as set out in [Specifications](#specifications). If a pull request has gone about five working days without a reviewer emerging, ask in the community chat rather than pinging individuals. Disagreements that the reviewing Maintainers cannot resolve escalate to the TSC, and only genuinely cross-cutting disputes reach the full committee.
+
+## Specifications
+
+The specifications in `spec/` are developed under the Community Specification process. By contributing to them you agree to the [Contributor License Agreement](spec/00-contributor-license-agreement.md), and your contribution is made under the [Community Specification License 1.0](spec/01-community-specification-license-v1.md). The rest of this file applies to them too, with these additions:
+
+- **New standards.** Follow the standardisation stages in [spec/PROCESS.md](spec/PROCESS.md), and start from the [template](spec/ics-template.md).
+- **One standard per pull request.** Each pull request changes a single standard, named as the scope of its Conventional Commits title, for example `fix(ics-004): correct timeout check`. If a fix needs changes to several standards, open one pull request per standard and mention the dependencies between them. Repository-wide changes that touch every standard in the same way, such as licensing, formatting or template updates, are the exception and may land in one pull request.
+- **Approval.** A pull request needs approval from at least two [TSC members](TSC_MEMBERS.md) before merge, or from one other TSC member if a TSC member opened it. The TSC is the [Standards Committee](spec/STANDARDS_COMMITTEE.md).
+- **What an approval means.** By approving, you confirm that you:
+  - understand all the proposed changes;
+  - have thought through anything that ought to be included but is not;
+  - have considered any security issues or incentive-compatibility flaws the changes introduce;
+  - have checked their consistency with the other IBC standards, especially the [core transport standards](README.md#core-transport), and with [ICS 1](spec/ics-001-ics-standard/README.md).
+
+  Leave surface-level notes as comments, without approving.
+- **Consistency with main.** Standards cannot be compiled, so after rebasing on main, check that your changes are still consistent with the new commits.
 
 ## Copyright and license
 
-Code is contributed under Apache 2.0, specifications under the Community Specification License 1.0, and documentation under CC BY 4.0, regardless of where in the repository the file lives. The SPDX header on each file records which applies.
+Code is contributed under [Apache 2.0](LICENSE), specifications under the [Community Specification License 1.0](spec/01-community-specification-license-v1.md), and documentation under [CC BY 4.0](docs/LICENSE), regardless of where in the repository the file lives. The SPDX header on each file records which applies, except in snapshots of the documentation at past releases, which carry none.
+
+Content contributed before [`docs/LICENSE`](docs/LICENSE) was added was contributed under the [Apache 2.0](LICENSE) license, except the ibc-go documentation imported into `docs/ibc-go/`, which was written in [lfdt-ibc/ibc-go](https://github.com/lfdt-ibc/ibc-go) under the MIT License until 8 January 2026 and under Apache 2.0 from then on. Copies received under those terms remain available under them. See [spec/04-license.md](spec/04-license.md#content-contributed-before-these-licenses) for how this applies to the specifications.
 
 ## Trivial contributions
 
