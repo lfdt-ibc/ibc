@@ -16,27 +16,31 @@ import (
 
 	channeltypesv2 "github.com/cosmos/ibc-go/v11/modules/core/04-channel/v2/types"
 	proverv2 "github.com/lfdt-ibc/ibc/cli/api/v2/prover"
+	"github.com/lfdt-ibc/ibc/cli/internal/config"
 	"github.com/lfdt-ibc/ibc/cli/internal/network"
 	v2 "github.com/lfdt-ibc/ibc/cli/internal/types/v2"
 )
 
-// todo: make it configurable in ibc.yaml
-const (
-	maxResponseBytes = 1 << 20 // 1MB
-	requestTimeout   = 30 * time.Second
-)
+const maxResponseBytes = 1 << 20 // 1MB
 
 // Prover proves one light client remotely. Every request names the client, so
 // one service can serve many.
 type Prover struct {
-	client   proverv2.ProverServiceClient
-	chainID  string
-	clientID string
-	logger   *slog.Logger
+	requestTimeout time.Duration
+	client         proverv2.ProverServiceClient
+	chainID        string
+	clientID       string
+	logger         *slog.Logger
 }
 
-func New(httpClient connect.HTTPClient, url, chainID, clientID string, logger *slog.Logger) *Prover {
+func New(
+	httpClient connect.HTTPClient,
+	url, chainID, clientID string,
+	requestTimeout time.Duration,
+	logger *slog.Logger,
+) *Prover {
 	return &Prover{
+		requestTimeout: requestTimeoutOrDefault(requestTimeout),
 		client: proverv2.NewProverServiceClient(
 			httpClient,
 			url,
@@ -51,22 +55,34 @@ func New(httpClient connect.HTTPClient, url, chainID, clientID string, logger *s
 
 // NewFromEndpoint dials endpoint with a client that can negotiate h2c, which
 // gRPC requires over plaintext.
-func NewFromEndpoint(endpoint network.Endpoint, chainID, clientID string, logger *slog.Logger) *Prover {
-	return New(newHTTPClient(endpoint.TLS), endpoint.URL, chainID, clientID, logger)
+func NewFromEndpoint(
+	endpoint network.Endpoint,
+	chainID, clientID string,
+	requestTimeout time.Duration,
+	logger *slog.Logger,
+) *Prover {
+	return New(newHTTPClient(endpoint.TLS, requestTimeout), endpoint.URL, chainID, clientID, requestTimeout, logger)
 }
 
-func newHTTPClient(tlsConfig *tls.Config) *http.Client {
+func newHTTPClient(tlsConfig *tls.Config, requestTimeout time.Duration) *http.Client {
 	protocols := new(http.Protocols)
 	protocols.SetHTTP2(true)
 	protocols.SetUnencryptedHTTP2(true)
 
 	return &http.Client{
+		Timeout: requestTimeoutOrDefault(requestTimeout),
 		Transport: &http.Transport{
-			Protocols:             protocols,
-			TLSClientConfig:       tlsConfig,
-			ResponseHeaderTimeout: requestTimeout,
+			Protocols:       protocols,
+			TLSClientConfig: tlsConfig,
 		},
 	}
+}
+
+func requestTimeoutOrDefault(timeout time.Duration) time.Duration {
+	if timeout <= 0 {
+		return config.DefaultRemoteProverRequestTimeout
+	}
+	return timeout
 }
 
 func (p *Prover) target() *proverv2.Client {
@@ -74,7 +90,7 @@ func (p *Prover) target() *proverv2.Client {
 }
 
 func (p *Prover) LatestProvableHeight(ctx context.Context) (uint64, time.Time, error) {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, p.requestTimeout)
 	defer cancel()
 
 	res, err := p.client.LatestProvableHeight(ctx, connect.NewRequest(&proverv2.LatestProvableHeightRequest{
@@ -93,7 +109,7 @@ func (p *Prover) LatestProvableHeight(ctx context.Context) (uint64, time.Time, e
 }
 
 func (p *Prover) ClientUpdatePayloads(ctx context.Context, height uint64) ([][]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, p.requestTimeout)
 	defer cancel()
 
 	res, err := p.client.ClientUpdatePayloads(ctx, connect.NewRequest(&proverv2.ClientUpdatePayloadsRequest{
@@ -124,7 +140,7 @@ func (p *Prover) PacketProofs(
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, p.requestTimeout)
 	defer cancel()
 
 	res, err := p.client.PacketProofs(ctx, connect.NewRequest(&proverv2.PacketProofsRequest{

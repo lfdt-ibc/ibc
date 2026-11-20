@@ -17,6 +17,9 @@ const (
 // DefaultClearOnStart whether a clearing pass runs at startup when clearOnStart is unset.
 const DefaultClearOnStart = true
 
+// DefaultRemoteProverRequestTimeout bounds remote prover RPCs when requestTimeout is unset.
+const DefaultRemoteProverRequestTimeout = 30 * time.Second
+
 // builtInClientTypes are the types the IBC CLI proves without a ProverService.
 var builtInClientTypes = []string{ClientTypeAttestation, ClientTypeBesu}
 
@@ -128,6 +131,9 @@ type RemoteProverConfig struct {
 	// URL is the ProverService endpoint: an http(s):// URL, or a bare host:port
 	// dialed as http://. Without a query or fragment.
 	URL string `yaml:"url"`
+
+	// RequestTimeout limits each remote prover RPC. Must be positive when set.
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty"`
 
 	// TLS settings for an https:// URL, see TLSClientConfig.
 	TLS *TLSClientConfig `yaml:"tls,omitempty"`
@@ -291,7 +297,19 @@ func (p RemoteProverConfig) EndpointURL() string {
 	return endpointURL(p.URL)
 }
 
+// RequestTimeoutOrDefault returns the configured RPC timeout or the default.
+func (p RemoteProverConfig) RequestTimeoutOrDefault() time.Duration {
+	if p.RequestTimeout != nil {
+		return *p.RequestTimeout
+	}
+	return DefaultRemoteProverRequestTimeout
+}
+
 func (p RemoteProverConfig) Validate() error {
+	if p.RequestTimeout != nil && *p.RequestTimeout <= 0 {
+		return errPathf("requestTimeout", "must be positive")
+	}
+
 	if p.URL == "" {
 		return errPathf("url", "required")
 	}
