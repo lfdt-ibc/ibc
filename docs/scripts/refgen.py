@@ -682,9 +682,10 @@ DEFAULTS_FUNC = r"^func [A-Z]\w*\(\s*\)\s*\*?" + CONFIG_ROOT + r"\s*\{"
 # value: a named constant in the code that consumes the field. The label in
 # each entry is prose; the value is always read from source, and a missing
 # constant is an error rather than a stale number.
-# The constant names it: a package that moves costs nothing, and a constant
-# that is renamed or deleted is a real change that says so by name.
+# A constant can be qualified with its package directory within the CLI module
+# when the same name appears in more than one package.
 DEFAULT_CONSTS = {
+    ("RemoteProverConfig", "requestTimeout"): [("", "internal/relay/prover/remote:requestTimeout")],
     ("RelayerEVMConfig", "pendingTxTimeout"): [("", "DefaultPendingTxTimeout")],
     ("RelayerConfig", "dispatchPollInterval"): [("", "DefaultPollInterval")],
     ("RelayerChainOverride", "packetBatchSize"): [("", "DefaultBatchSize")],
@@ -1465,13 +1466,13 @@ RULELESS_VALIDATORS = {
 }
 
 
-def _const_value(name):
+def _const_value(reference):
     """A named Go constant's value, and where it is declared.
 
-    The constant is found by name across the repo rather than read out of a
-    path written down here: the package it lives in is free to move, and a
-    constant that is renamed or deleted is a change worth stopping for.
+    An unqualified name is looked up across the CLI module. A package
+    directory can qualify the name when multiple packages use it.
     """
+    package, _, name = reference.rpartition(":")
     # The declaration, not a mention of it. A constant named in a comment --
     # `// DefaultPollInterval = 99 * time.Second (was)` -- matched a bare
     # search first and published that number.
@@ -1484,9 +1485,12 @@ def _const_value(name):
     # only the module the CLI is built from: an unrelated package elsewhere in
     # the repo declaring the same name is not this page's business
     module = _anchors()["cli_module"]
+    package_dir = os.path.join(module, package) if package else None
     hits = []
     for rel in _walk(".go"):
         if rel.endswith("_test.go") or not rel.startswith(module + os.sep):
+            continue
+        if package_dir and os.path.dirname(rel) != package_dir:
             continue
         src = open(os.path.join(IBC, rel), errors="ignore").read()
         # every match, not the first: a constant of the same name declared
@@ -1497,7 +1501,7 @@ def _const_value(name):
     if len(hits) != 1:
         _problem(
             "unreadable_default",
-            f"constant {name} has {len(hits)} declarations"
+            f"constant {reference} has {len(hits)} declarations"
             + (f" (in {', '.join(sorted({h[0] for h in hits}))})" if hits else "")
             + "; a default on the page is read from it, so it cannot be "
             "guessed at. It was renamed, removed, or duplicated.",

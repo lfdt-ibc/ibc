@@ -129,6 +129,9 @@ type RemoteProverConfig struct {
 	// dialed as http://. Without a query or fragment.
 	URL string `yaml:"url"`
 
+	// RequestTimeout limits each remote prover RPC. Must be positive when set.
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty"`
+
 	// TLS settings for an https:// URL, see TLSClientConfig.
 	TLS *TLSClientConfig `yaml:"tls,omitempty"`
 }
@@ -292,6 +295,10 @@ func (p RemoteProverConfig) EndpointURL() string {
 }
 
 func (p RemoteProverConfig) Validate() error {
+	if p.RequestTimeout != nil && *p.RequestTimeout <= 0 {
+		return errPathf("requestTimeout", "must be positive")
+	}
+
 	if p.URL == "" {
 		return errPathf("url", "required")
 	}

@@ -20,9 +20,9 @@ import (
 	v2 "github.com/lfdt-ibc/ibc/cli/internal/types/v2"
 )
 
-// todo: make it configurable in ibc.yml
+
 const (
-	maxResponseBytes = 1 << 20 // 1MB
+	maxResponseBytes = 1 << 20 // 1MB // todo: make it configurable in ibc.yml
 	requestTimeout   = 30 * time.Second
 )
 
@@ -35,6 +35,7 @@ type Prover struct {
 	logger   *slog.Logger
 }
 
+// New uses the supplied HTTP client, which controls the request timeout.
 func New(httpClient connect.HTTPClient, url, chainID, clientID string, logger *slog.Logger) *Prover {
 	return &Prover{
 		client: proverv2.NewProverServiceClient(
@@ -51,20 +52,30 @@ func New(httpClient connect.HTTPClient, url, chainID, clientID string, logger *s
 
 // NewFromEndpoint dials endpoint with a client that can negotiate h2c, which
 // gRPC requires over plaintext.
-func NewFromEndpoint(endpoint network.Endpoint, chainID, clientID string, logger *slog.Logger) *Prover {
-	return New(newHTTPClient(endpoint.TLS), endpoint.URL, chainID, clientID, logger)
+func NewFromEndpoint(
+	endpoint network.Endpoint,
+	chainID, clientID string,
+	configuredTimeout *time.Duration,
+	logger *slog.Logger,
+) *Prover {
+	return New(newHTTPClient(endpoint.TLS, configuredTimeout), endpoint.URL, chainID, clientID, logger)
 }
 
-func newHTTPClient(tlsConfig *tls.Config) *http.Client {
+func newHTTPClient(tlsConfig *tls.Config, configuredTimeout *time.Duration) *http.Client {
+	timeout := requestTimeout
+	if configuredTimeout != nil && *configuredTimeout > 0 {
+		timeout = *configuredTimeout
+	}
+
 	protocols := new(http.Protocols)
 	protocols.SetHTTP2(true)
 	protocols.SetUnencryptedHTTP2(true)
 
 	return &http.Client{
+		Timeout: timeout,
 		Transport: &http.Transport{
-			Protocols:             protocols,
-			TLSClientConfig:       tlsConfig,
-			ResponseHeaderTimeout: requestTimeout,
+			Protocols:       protocols,
+			TLSClientConfig: tlsConfig,
 		},
 	}
 }
@@ -74,9 +85,6 @@ func (p *Prover) target() *proverv2.Client {
 }
 
 func (p *Prover) LatestProvableHeight(ctx context.Context) (uint64, time.Time, error) {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
-
 	res, err := p.client.LatestProvableHeight(ctx, connect.NewRequest(&proverv2.LatestProvableHeightRequest{
 		Client: p.target(),
 	}))
@@ -93,9 +101,6 @@ func (p *Prover) LatestProvableHeight(ctx context.Context) (uint64, time.Time, e
 }
 
 func (p *Prover) ClientUpdatePayloads(ctx context.Context, height uint64) ([][]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
-
 	res, err := p.client.ClientUpdatePayloads(ctx, connect.NewRequest(&proverv2.ClientUpdatePayloadsRequest{
 		Client: p.target(),
 		Height: height,
@@ -123,9 +128,6 @@ func (p *Prover) PacketProofs(
 	if err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
 
 	res, err := p.client.PacketProofs(ctx, connect.NewRequest(&proverv2.PacketProofsRequest{
 		Client:           p.target(),

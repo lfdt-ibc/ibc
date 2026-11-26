@@ -269,6 +269,7 @@ The deployer must be a local signer, because deployment requires direct access t
 | `connections[].clientA.clientId, connections[].clientB.clientId` | `string` | **required** | The light client's id on this chain. |
 | `connections[].clientA.type, connections[].clientB.type` | `string` | **required** | The on-chain light client type: `attestation` or `besu`, or with a remoteProver any type, including ones the IBC CLI does not implement. |
 | `connections[].clientA.remoteProver.url, connections[].clientB.remoteProver.url` | `string` | **required** in `remoteProver` | The ProverService endpoint: an http(s):// URL, or a bare host:port dialed as http://. Without a query or fragment. |
+| `connections[].clientA.remoteProver.requestTimeout, connections[].clientB.remoteProver.requestTimeout` | `duration` | `30s` | Limits each remote prover RPC. Must be positive when set. |
 | `connections[].clientA.remoteProver.tls.caFile, connections[].clientB.remoteProver.tls.caFile` | `string` | optional | A PEM bundle verifying the server. Empty uses system roots. Read at startup, so a changed bundle needs a restart. |
 | `connections[].clientA.remoteProver.tls.certFile, connections[].clientB.remoteProver.tls.certFile` | `string` | optional | The client certificate presented for mTLS. Required with keyFile. Omit both for one-way TLS. Read at startup, so a rotated certificate needs a restart. |
 | `connections[].clientA.remoteProver.tls.keyFile, connections[].clientB.remoteProver.tls.keyFile` | `string` | optional | The private key for certFile. Required with certFile. |
@@ -277,7 +278,7 @@ The deployer must be a local signer, because deployment requires direct access t
 | `connections[].clientA.autoRelay.enabled, connections[].clientB.autoRelay.enabled` | `bool` | optional | Whether the relayer carries packets leaving this end without being asked. |
 | `connections[].clientA.autoUpdate.interval, connections[].clientB.autoUpdate.interval` | `duration` | optional | How often the client is updated to the latest height its prover can prove. Setting a positive interval enables automatic updates; unset disables them. Keep it well below the client's trusting period. |
 
-{/* [relayer.go:L61](cli/internal/config/relayer.go#L61) */}
+{/* [relayer.go:L61](cli/internal/config/relayer.go#L61) */} {/* [remote.go:L26](cli/internal/relay/prover/remote/remote.go#L26) */}
 
 {/* GEN:config:relayer:connections END */}
 
