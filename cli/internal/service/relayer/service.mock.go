@@ -201,6 +201,80 @@ func (_c *MockStore_ListPackets_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// ListPacketsBySourceTx provides a mock function for the type MockStore
+func (_mock *MockStore) ListPacketsBySourceTx(ctx context.Context, chainID string, txHash string) ([]store.Packet, error) {
+	ret := _mock.Called(ctx, chainID, txHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPacketsBySourceTx")
+	}
+
+	var r0 []store.Packet
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) ([]store.Packet, error)); ok {
+		return returnFunc(ctx, chainID, txHash)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) []store.Packet); ok {
+		r0 = returnFunc(ctx, chainID, txHash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]store.Packet)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, chainID, txHash)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_ListPacketsBySourceTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPacketsBySourceTx'
+type MockStore_ListPacketsBySourceTx_Call struct {
+	*mock.Call
+}
+
+// ListPacketsBySourceTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - chainID string
+//   - txHash string
+func (_e *MockStore_Expecter) ListPacketsBySourceTx(ctx any, chainID any, txHash any) *MockStore_ListPacketsBySourceTx_Call {
+	return &MockStore_ListPacketsBySourceTx_Call{Call: _e.mock.On("ListPacketsBySourceTx", ctx, chainID, txHash)}
+}
+
+func (_c *MockStore_ListPacketsBySourceTx_Call) Run(run func(ctx context.Context, chainID string, txHash string)) *MockStore_ListPacketsBySourceTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStore_ListPacketsBySourceTx_Call) Return(packets []store.Packet, err error) *MockStore_ListPacketsBySourceTx_Call {
+	_c.Call.Return(packets, err)
+	return _c
+}
+
+func (_c *MockStore_ListPacketsBySourceTx_Call) RunAndReturn(run func(ctx context.Context, chainID string, txHash string) ([]store.Packet, error)) *MockStore_ListPacketsBySourceTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Ping provides a mock function for the type MockStore
 func (_mock *MockStore) Ping(ctx context.Context) error {
 	ret := _mock.Called(ctx)

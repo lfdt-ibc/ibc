@@ -49,6 +49,7 @@ type ChainClients interface {
 type Store interface {
 	Ping(ctx context.Context) error
 	ListPackets(ctx context.Context, filter store.PacketFilter, page store.Page) ([]store.Packet, error)
+	ListPacketsBySourceTx(ctx context.Context, chainID string, txHash string) ([]store.Packet, error)
 	Transact(ctx context.Context, call func(store.Repository) error) error
 }
 
@@ -448,7 +449,7 @@ func (s *Service) Packets(
 	limit = min(limit, MaxPacketPageLimit)
 
 	// One row past the page reveals another page
-	packets, err := s.store.ListPackets(ctx, storeFilter, store.Page{
+	packets, err := s.listPackets(ctx, storeFilter, store.Page{
 		Limit:  limit + 1,
 		Before: before,
 	})
@@ -468,6 +469,55 @@ func (s *Service) Packets(
 	}
 
 	return page, nil
+}
+
+// listPackets serves a filter on one source tx from the indexed per-tx query.
+// The general listing cannot use that index, so it scans the whole table for a
+// tx. A tx carries few packets, so the other filters, the id order and the
+// page are applied here, matching ListPackets.
+func (s *Service) listPackets(ctx context.Context, filter store.PacketFilter, page store.Page) ([]store.Packet, error) {
+	if filter.SourceChainID == "" || filter.SourceTxHash == "" {
+		return s.store.ListPackets(ctx, filter, page)
+	}
+
+	txPackets, err := s.store.ListPacketsBySourceTx(ctx, filter.SourceChainID, filter.SourceTxHash)
+	if err != nil {
+		return nil, err
+	}
+
+	packets := make([]store.Packet, 0, len(txPackets))
+
+	for _, packet := range txPackets {
+		if matchesPacketFilter(packet, filter) && (page.Before <= 0 || packet.ID < page.Before) {
+			packets = append(packets, packet)
+		}
+	}
+
+	slices.SortFunc(packets, func(a, b store.Packet) int { return cmp.Compare(b.ID, a.ID) })
+
+	if int64(len(packets)) > page.Limit {
+		packets = packets[:page.Limit]
+	}
+
+	return packets, nil
+}
+
+// matchesPacketFilter applies the ListPackets filters other than chain and tx hash.
+func matchesPacketFilter(packet store.Packet, filter store.PacketFilter) bool {
+	switch {
+	case !slices.Contains(filter.Statuses, packet.Status):
+		return false
+	case filter.DestinationChainID != "" && packet.DestinationChainID != filter.DestinationChainID:
+		return false
+	case filter.SourceClientID != "" && packet.PacketSourceClientID != filter.SourceClientID:
+		return false
+	case filter.DestinationClientID != "" && packet.PacketDestinationClientID != filter.DestinationClientID:
+		return false
+	case filter.SequenceNumber != 0 && packet.PacketSequenceNumber != filter.SequenceNumber:
+		return false
+	default:
+		return true
+	}
 }
 
 func encodeCursor(id int64) string {

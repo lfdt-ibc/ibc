@@ -199,3 +199,66 @@ func TestPacketsUnknownDataFiltersReturnEmpty(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, page.Packets)
 }
+
+// A filter on one source tx must use the indexed per-tx query: the general
+// listing cannot use that index and scans the whole table. The mock fails on
+// any ListPackets call. The other filters, the id order and the cursor must
+// behave as the general listing does.
+func TestPacketsBySourceTxUsesIndexedQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	st := NewMockStore(t)
+	service := New(relayerConfig(), st, NewMockChainClients(t), nil, nil, nil)
+
+	packet := func(id int64, status store.RelayStatus, client string, sequence uint64) store.Packet {
+		return store.Packet{
+			ID: id, Status: status, SourceChainID: chainIDEth, DestinationChainID: "2",
+			SourceTxHash: txHashLower, PacketSequenceNumber: sequence,
+			PacketSourceClientID: client, PacketDestinationClientID: "dst-" + client,
+		}
+	}
+	// Sequence order, as the per-tx query returns them; ids are not in that order.
+	rows := []store.Packet{
+		packet(30, store.RelayStatusPending, "a", 1),
+		packet(10, store.RelayStatusCompleteWithAck, "a", 2),
+		packet(40, store.RelayStatusPending, "b", 3),
+		packet(20, store.RelayStatusAwaitingSendFinality, "a", 4),
+	}
+	st.EXPECT().ListPacketsBySourceTx(ctx, chainIDEth, txHashLower).Return(rows, nil)
+
+	sequences := func(page PacketPage) []uint64 {
+		out := make([]uint64, len(page.Packets))
+		for i, p := range page.Packets {
+			out[i] = p.SequenceNumber
+		}
+		return out
+	}
+	list := func(filter PacketFilter, query PacketQuery) PacketPage {
+		t.Helper()
+		filter.SourceChainID, filter.SourceTxHash = chainIDEth, txHashUpper
+		page, err := service.Packets(ctx, filter, query)
+		require.NoError(t, err)
+		return page
+	}
+
+	all := list(PacketFilter{}, PacketQuery{})
+	require.Equal(t, []uint64{3, 1, 4, 2}, sequences(all), "newest id first")
+	require.False(t, all.HasMore)
+
+	require.Equal(t, []uint64{3, 1, 4}, sequences(list(PacketFilter{State: StatePending}, PacketQuery{})))
+	require.Equal(t, []uint64{1, 4, 2}, sequences(list(PacketFilter{SourceClientID: "a"}, PacketQuery{})))
+	require.Equal(t, []uint64{3}, sequences(list(PacketFilter{DestinationClientID: "dst-b"}, PacketQuery{})))
+	require.Equal(t, []uint64{4}, sequences(list(PacketFilter{SequenceNumber: 4}, PacketQuery{})))
+	require.Empty(t, sequences(list(PacketFilter{DestinationChainID: chainIDEth}, PacketQuery{})))
+
+	first := list(PacketFilter{}, PacketQuery{Limit: 2})
+	require.Equal(t, []uint64{3, 1}, sequences(first))
+	require.True(t, first.HasMore)
+	require.Equal(t, encodeCursor(30), first.NextCursor)
+
+	second := list(PacketFilter{}, PacketQuery{Limit: 2, Cursor: first.NextCursor})
+	require.Equal(t, []uint64{4, 2}, sequences(second))
+	require.False(t, second.HasMore)
+	require.Empty(t, second.NextCursor)
+}

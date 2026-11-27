@@ -17,6 +17,7 @@ import (
 	"github.com/lfdt-ibc/ibc/cli/internal/config"
 	"github.com/lfdt-ibc/ibc/cli/internal/otel"
 	"github.com/lfdt-ibc/ibc/cli/internal/pkg/graceful"
+	"github.com/lfdt-ibc/ibc/cli/internal/server"
 )
 
 var (
@@ -120,12 +121,29 @@ func relayerRun(cmd *cobra.Command, _ []string) error {
 	address, err := app.Server.Start()
 	if err != nil {
 		app.Logger.Error("Failed to start relayer server", "err", err)
+		_ = app.Store.Close()
 		return err
+	}
+
+	// Optional MCP server on its own port, calling this relayer in-process.
+	// Started before the background loops, so a bad address, token or audit
+	// file stops the process before the relayer has submitted anything. The
+	// relayer API above is already served at this point too.
+	stopMCP, mcpErr := startRelayerMCP(cfg, server.NewRelayerHandler(app.RelayerService), app.TxSubmitters)
+	if mcpErr != nil {
+		app.Logger.Error("Failed to start MCP server", "err", mcpErr)
+		_ = app.Server.Stop()
+		_ = app.Store.Close()
+		return mcpErr
 	}
 
 	if err := app.RelayerService.Start(); err != nil {
 		app.Logger.Error("Failed to start relayer background loops", "err", err)
+		if stopMCP != nil {
+			_ = stopMCP()
+		}
 		_ = app.Server.Stop()
+		_ = app.Store.Close()
 		return err
 	}
 
@@ -144,6 +162,9 @@ func relayerRun(cmd *cobra.Command, _ []string) error {
 	graceful.AddCallback(app.Store.Close)
 	graceful.AddCallback(app.Server.Stop)
 	graceful.AddCallback(app.RelayerService.Stop)
+	if stopMCP != nil {
+		graceful.AddCallback(stopMCP)
+	}
 
 	// blocking
 	return graceful.WaitShutdown()

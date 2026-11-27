@@ -15,6 +15,11 @@ import (
 	v2 "github.com/lfdt-ibc/ibc/cli/internal/types/v2"
 )
 
+var _ TxSubmitter = (*evm.TxSubmitter)(nil)
+
+// ErrBusy indicates that a submission should be retried when capacity is available.
+var ErrBusy = evm.ErrBusy
+
 // TxSubmitter simulates, signs, and broadcasts transactions on a single chain;
 // implementations own nonce selection and gas pricing.
 type TxSubmitter interface {
@@ -28,11 +33,6 @@ type TxSubmitter interface {
 	// resubmitted.
 	ShouldRetry(ctx context.Context, txHash string, sentAt time.Time) (bool, error)
 }
-
-var _ TxSubmitter = (*evm.TxSubmitter)(nil)
-
-// ErrBusy indicates that a submission should be retried when capacity is available.
-var ErrBusy = evm.ErrBusy
 
 // Set holds one tx submitter per (chain, signer) pair relayed by
 // the configured routes. A chain may carry several signers when different
@@ -52,6 +52,20 @@ func NewSet(txSubmitters map[config.ChainSignerPair]TxSubmitter) *Set {
 func (s *Set) Get(chainID, signerAlias string) (TxSubmitter, bool) {
 	txSubmitter, ok := s.txSubmitters[config.ChainSignerPair{ChainID: chainID, SignerAlias: signerAlias}]
 	return txSubmitter, ok
+}
+
+// SignerAddress returns signerAlias's EVM address from its submitter, which
+// also covers remote signers with no key file; false if no route uses it.
+func (s *Set) SignerAddress(signerAlias string) (string, bool) {
+	for pair, txSubmitter := range s.txSubmitters {
+		if pair.SignerAlias != signerAlias {
+			continue
+		}
+		if e, ok := txSubmitter.(*evm.TxSubmitter); ok {
+			return e.Address(), true
+		}
+	}
+	return "", false
 }
 
 // NewFromConfig builds one tx submitter per (chain, signer) pair relayed by

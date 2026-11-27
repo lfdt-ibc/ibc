@@ -17,6 +17,7 @@ import (
 const (
 	AttrOp     attribute.Key = "operation"
 	AttrType   attribute.Key = "type"
+	AttrTool   attribute.Key = "tool"
 	AttrResult attribute.Key = "result"
 	AttrCode   attribute.Key = "code"
 	AttrCaller attribute.Key = "caller"
@@ -47,12 +48,15 @@ const serviceName = "ibc"
 // MetricConstructor is a function that constructs a metric instance
 type MetricConstructor[T any] func(meter metric.Meter) (*T, error)
 
+// Meter is the meter RegisterMetrics uses for name. Relayer instruments,
+// including MCP tool calls, use Meter("relayer"): scope ibc.relayer on the
+// provider GlobalSetup installed.
+func Meter(name string) metric.Meter {
+	return otel.Meter(fmt.Sprintf("%s.%s", serviceName, name))
+}
+
 func RegisterMetrics[T any](name string, constructor MetricConstructor[T]) *T {
-	fullName := fmt.Sprintf("%s.%s", serviceName, name)
-
-	meter := otel.Meter(fullName)
-
-	constructed, err := constructor(meter)
+	constructed, err := constructor(Meter(name))
 	if err != nil {
 		panic(fmt.Errorf("failed to construct metrics for %s: %w", name, err))
 	}

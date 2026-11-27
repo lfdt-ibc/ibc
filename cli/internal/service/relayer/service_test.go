@@ -477,7 +477,7 @@ func TestPackets(t *testing.T) {
 		st := NewMockStore(t)
 		service := New(relayerConfig(), st, NewMockChainClients(t), nil, nil, nil)
 
-		st.EXPECT().ListPackets(ctx, mock.Anything, mock.Anything).Return(nil, nil).Once()
+		st.EXPECT().ListPacketsBySourceTx(ctx, chainIDEth, txHashLower).Return(nil, nil).Once()
 
 		// ACT
 		page, err := service.Packets(ctx, PacketFilter{
@@ -500,9 +500,9 @@ func TestPackets(t *testing.T) {
 
 		var seen string
 
-		st.EXPECT().ListPackets(ctx, mock.Anything, mock.Anything).
-			Run(func(_ context.Context, filter store.PacketFilter, _ store.Page) {
-				seen = filter.SourceTxHash
+		st.EXPECT().ListPacketsBySourceTx(ctx, chainIDEth, mock.Anything).
+			Run(func(_ context.Context, _ string, txHash string) {
+				seen = txHash
 			}).Return(nil, nil).Once()
 
 		_, err := service.Packets(ctx, PacketFilter{

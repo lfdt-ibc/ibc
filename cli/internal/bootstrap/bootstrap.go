@@ -30,6 +30,8 @@ type Services struct {
 
 	Store   store.Store
 	Signers *signer.Set
+	// TxSubmitters is one nonce allocator per (chain, signer) the relayer submits with.
+	TxSubmitters *txsubmitter.Set
 
 	RelayerService  *relayer.Service
 	AttestorService *attestor.Service
@@ -150,6 +152,7 @@ func BuildRelayer(cfg config.Config) (*Services, error) {
 		Server:          srv,
 		Store:           db,
 		Signers:         signers,
+		TxSubmitters:    txSubmitters,
 		RelayerService:  relayerService,
 		AttestorService: attestorService,
 	}, nil

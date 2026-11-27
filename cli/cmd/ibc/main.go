@@ -117,6 +117,8 @@ func init() {
 	// Relayer commands
 	cmdRelayer.AddCommand(cmdRelayerRun, cmdRelayerRelay, cmdRelayerPackets)
 	cmdRelayerRun.Flags().BoolVarP(&flagRelayerNoMigrate, "no-migrate", "", false, "skip database migrations")
+	cmdRelayerRun.Flags().StringVar(&flagRelayerMCPListen, "mcp-listen", "",
+		"override mcp.listenAddr for this run; loopback host:port, e.g. 127.0.0.1:3001")
 	for _, c := range []*cobra.Command{cmdRelayerRelay, cmdRelayerPackets} {
 		c.Flags().StringVar(&flagRelayerHost, "host", "", "dial this address instead of resolving from config")
 		c.Flags().StringVar(&flagRelayerTxHash, "tx-hash", "", "source transaction hash")
